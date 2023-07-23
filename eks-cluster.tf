@@ -48,9 +48,9 @@ resource "aws_security_group" "eks-cluster" {
   }
 
   tags = "${
-    map(
-     "Name", "EKS - kubernetes master sg"
-    )
+    tomap({
+     "Name"= "EKS - kubernetes master sg"
+    })
   }"
 }
 
@@ -70,7 +70,7 @@ resource "aws_security_group_rule" "eks-cluster-ingress-node-https" {
 }
 
 resource "aws_security_group_rule" "eks-cluster-ingress-workstation-https" {
-  cidr_blocks       = ["${local.workstation-external-cidr}"]
+  cidr_blocks       = [local.workstation-external-cidr]
   description       = "Allow workstation to communicate with the cluster API Server"
   from_port         = 443
   protocol          = "tcp"
@@ -85,19 +85,18 @@ resource "aws_security_group_rule" "eks-cluster-ingress-workstation-https" {
 ##
 
 resource "aws_eks_cluster" "eks-cluster" {
-
-  name     = "${var.cluster-name}"
-  role_arn = "${aws_iam_role.eks-cluster.arn}"
-  version  = "${var.eks_version}"
+  name     = var.cluster-name
+  role_arn = aws_iam_role.eks-cluster.arn
+  version  = var.eks_version
   # enabled_cluster_log_types = ["api", "audit", "scheduler", "controllerManager"]
 
   vpc_config {
-    security_group_ids = ["${aws_security_group.eks-cluster.id}"]
-    subnet_ids         = ["${aws_subnet.eks-public.*.id}", "${aws_subnet.eks-private.*.id}"]
+    security_group_ids = [aws_security_group.eks-cluster.id]
+    subnet_ids         = concat(aws_subnet.eks-public.*.id, aws_subnet.eks-private.*.id)
   }
 
   depends_on = [
-    "aws_iam_role_policy_attachment.eks-cluster-AmazonEKSClusterPolicy",
-    "aws_iam_role_policy_attachment.eks-cluster-AmazonEKSServicePolicy",
+    aws_iam_role_policy_attachment.eks-cluster-AmazonEKSClusterPolicy,
+    aws_iam_role_policy_attachment.eks-cluster-AmazonEKSServicePolicy,
   ]
 }

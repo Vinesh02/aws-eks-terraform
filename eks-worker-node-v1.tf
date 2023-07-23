@@ -19,13 +19,16 @@ resource "aws_security_group" "eks-node" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = "${
-    map(
-     "Name", "eks-worker-node-sg",
-     "kubernetes.io/cluster/${var.cluster-name}", "owned"
+  tags = merge (
+    {
+     "Name"= "eks-worker-node-sg"
+    },
+    {
+     "kubernetes.io/cluster/${var.cluster-name}"= "owned"
+    }
     )
-  }"
-}
+  }
+
 
 resource "aws_security_group_rule" "eks-node-ingress-self" {
   description              = "Allow node to communicate with each other"
@@ -91,11 +94,11 @@ resource "aws_launch_configuration" "eks-private-lc" {
 
 resource "aws_autoscaling_group" "eks-private-asg" {
   desired_capacity     = 1
-  launch_configuration = "${aws_launch_configuration.eks-private-lc.id}"
+  launch_configuration = aws_launch_configuration.eks-private-lc.id
   max_size             = 2
   min_size             = 1
-  name                 = "eks-private"
-  vpc_zone_identifier  = ["${aws_subnet.eks-private.*.id}"]
+  name                 = "eks-privateold"
+  vpc_zone_identifier  = [for subnet in aws_subnet.eks-private : subnet.id]
 
   tag {
     key                 = "Name"

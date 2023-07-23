@@ -39,11 +39,11 @@ resource "aws_launch_configuration" "eks-private-lc-v2" {
 
 resource "aws_autoscaling_group" "eks-private-asg-v2" {
   desired_capacity     = 1
-  launch_configuration = "${aws_launch_configuration.eks-private-lc-v2.id}"
+  launch_configuration = aws_launch_configuration.eks-private-lc-v2.id
   max_size             = 2
   min_size             = 1
-  name                 = "eks-private"
-  vpc_zone_identifier  = ["${aws_subnet.eks-private.*.id}"]
+  name                 = "eks-private2"
+  vpc_zone_identifier  = [for subnet in aws_subnet.eks-private : subnet.id]
 
   tag {
     key                 = "Name"
